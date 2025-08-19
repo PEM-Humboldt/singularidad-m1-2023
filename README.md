@@ -46,17 +46,15 @@ library(progress)
 Para este flujo de análisis se necesitan x archivos principales que son nombrados en el código de la siguiente manera:
 
 ```R
-dir_shapes <- "ruta_directorio" # directorio de shapes que muestran la distribucion de las especies de interes
-climdat.current <- stack(list.files("Ruta_directorio",full.names=TRUE)) # Capas climaticas presente
-climdat.fut1 <- stack(list.files("Ruta_directorio",full.names=TRUE)) # Capas climaticas futuro
+# En construcción
 ```
 
 
 # Descripción flujo de análisis
-
+En construción
 
 ## Diagrama
-![Image](https://github.com/user-attachments/assets/5908b0c4-8ee6-484d-adde-fc631c5fda06)
+![Image](https://github.com/PEM-Humboldt/singularidad-m1-2023/blob/7b0e7e0818c7e1d95726fe03a20468a2cfde96e8/Worlflux.jpg)
 
 ## Estructura del código
 Al igual que en el diagrama, el código se estructuró según las secciones del flujo de trabajo para que el usuario comprenda mejor las funciones.
@@ -127,17 +125,16 @@ Este proyecto está licenciado bajo la licencia MIT. Para obtener más informaci
 
 ## Financiamiento
 
-Este producto contribuye al proyecto financiado por el PLAN DE CONVOCATORIAS PÚBLICAS, ABIERTAS Y COMPETITIVAS DE LA ASIGNACIÓN PARA LA CIENCIA, TECNOLOGÍA E INNOVACIÓN DEL SISTEMA GENERAL DE REGALÍAS 2021–2022. Convocatoria No. 31 de asignación para la CTeI para ambiente y desarrollo sostenible del SGR para proyectos de investigación, desarrollo e innovación y fortalecimiento de centros de investigación para el ambiente y el desarrollo sostenible en las regiones. Mecanismo No. 2. Fortalecimiento de centros e institutos de investigación del Sistema Nacional Ambiental, del Instituto Humboldt (http://www.humboldt.org.co/es/), específicamente a la actividad asociada a la generación de un repositorio con los códigos utilizados para el monitoreo de la biodiversidad.
 
 # Referencias
-Rinnan, D. S., & Lawler, J. (2019). Climate-niche factor analysis: a spatial approach to quantifying species vulnerability to climate change. Ecography, 42(9), 1494–1503. https://doi.org/10.1111/ecog.03937
+
 
 Funciones de referencia: 
-https://www.rdocumentation.org/packages/CENFA/versions/1.1.1
+
 
 
 Repositorio de referencia:
-https://github.com/rinnan/CENFA 
+https://prioritizr.net/
 
 
 
