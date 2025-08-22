@@ -1,4 +1,4 @@
-# Areas de singularidad (Misión 1 IAvH)
+# 🌎 Areas de singularidad (Misión 1 IAvH)
 Este repositorio considera los desarrollos metodológicos y conceptuales actuales de la Planificación Sistemática de la Conservación (PSC), los cuales explotan los beneficios de los algoritmos de optimización para establecer escenarios de acuerdo a diferentes metas y objetivos de conservación. La implementación de  estás actividades de gestión de la biodiversidad están relacionadas con la Misión 1 del Instituto Humboldt, que se articulan con las prioridades de conservación de diferentes entidades territoriales. En esta misión se aborda la conservación de áreas de importancia ecológica, en donde se propone que a 2030 se vincule el 50% de las áreas continentales de importancia y singularidad ecológica del país a estrategias efectivas de conservación.
 
 ---
