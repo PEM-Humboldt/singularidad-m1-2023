@@ -1,6 +1,11 @@
-# Areas de singularidad
+# 💧 Áreas prioritarias para la conservación de ecosistemas de aguas interiores
 
+La PSC en los ecosistemas de aguas dulce interiores presenta rezagos teóricos y metodológicos en comparación a los ámbitos terrestres y marinos, debido a la complejidad de la conectividad fluvial, la falta de datos de distribución de especies y su alta variabilidad espacial y temporal. Algunos desafíos que complican los procesos de priorización en estos ecosistemas son: 
+*	Definición de las unidades de planeación acuáticas.
+*	Conservación basada en procesos, en lugar de conservación unicamente basada en área.
+* Selección de verdaderos sustitutos (biodiversidad representativa) de la biodiversidad acuática.
 
+En este repositorio se compilan las rutinas para la priorización de ecosistemas de aguas interiores con base en metas nacionales y globales. Aqunque se utiliza como caso piloto la Orinoquia Colombiana, una región rica en ecosistemas acuatícos, también se apunta a que estas metodologías puedan escalarse al nivel nacional y en otras regiones de Colombia.
 
 ---
 # Dependencias
@@ -28,20 +33,36 @@ library(future)
 library(rcbc)
 library(progress)
 
-# Versiones
-- terra: 1.8-15
-- sf: 1.0-18
-- prioritizr: 8.0.4
-- dplyr: 1.1.4
-- tidyr: 1.3.1
-- fasterize: 1.1.0
-- openxlsx: 4.2.8
-- crayon: 1.5.3
-- furrr: 0.3.1
-- future: 1.58.0
-- rcbc: 0.1.0.9002
-- progress: 1.2.3   
+# Versiones utilizadas
+package_versions <- list(
+  terra = "1.8-15",
+  sf = "1.0-18", 
+  prioritizr = "8.0.4",
+  dplyr = "1.1.4",
+  tidyr = "1.3.1",
+  fasterize = "1.1.0",
+  openxlsx = "4.2.8",
+  crayon = "1.5.3",
+  furrr = "0.3.1",
+  future = "1.58.0",
+  rcbc = "0.1.0.9002",
+  progress = "1.2.3"
+)
 ```
+# Descripción flujo de análisis
+
+La planificación sistemática de la conservación (PSC) para las aguas interiores de la Orinoquia siguió una metodología de cuatro etapas (diagrama abajo): (i) Conceptualización: se definieron unidades de planificación, metas y objetivos de conservación, incluyendo la selección de portafolios (por ejemplo, escenarios con y sin restricciones); (ii) Preprocesamiento de datos: los conjuntos de datos de entrada (por ejemplo, características hidrológicas, distribuciones de especies) fueron procesados para garantizar consistencia espacial y temática; (iii) Algoritmo de optimización: el modelo PrioritizR fue configurado con restricciones espaciales, métricas de conectividad y capas de costo, y ejecutado iterativamente para generar áreas prioritarias; y (iv) Postprocesamiento: los resultados fueron evaluados con base en la representatividad de las aguas interiores e interpretados frente a otros productos espaciales (por ejemplo, mapas de cobertura del suelo).
+
+![Image](https://github.com/PEM-Humboldt/singularidad-m1-2023/blob/7b0e7e0818c7e1d95726fe03a20468a2cfde96e8/Worlflux.jpg)
+
+
+## Ejecución del algoritmo
+Al igual que en el diagrama, el código se estructuró según las secciones del flujo de trabajo para que el usuario comprenda mejor las funciones.
+
+Las siguientes secciones y subsecciones pueden visualizarse fácilmente en RStudio:
+
+![Image](https://github.com/PEM-Humboldt/singularidad-m1-2023/blob/5ad64386aea3e43276e69d5cccc7b1579013130e/Imagenes/Estructura_algoirmo.png)
+
 # Archivos necesarios
 Para este flujo de análisis se necesitan x archivos principales que son nombrados en el código de la siguiente manera:
 
@@ -50,68 +71,13 @@ Para este flujo de análisis se necesitan x archivos principales que son nombrad
 ```
 
 
-# Descripción flujo de análisis
-En construción
 
-## Diagrama
-![Image](https://github.com/PEM-Humboldt/singularidad-m1-2023/blob/7b0e7e0818c7e1d95726fe03a20468a2cfde96e8/Worlflux.jpg)
 
-## Estructura del código
-Al igual que en el diagrama, el código se estructuró según las secciones del flujo de trabajo para que el usuario comprenda mejor las funciones.
 
-Las siguientes secciones y subsecciones pueden visualizarse fácilmente en RStudio:
-
-![Image](https://github.com/user-attachments/assets/1be77793-6e02-4941-b753-c7080c65d13e)
 
 # Errores comunes
-
-## 1. Errores de configuración inicial
-- **Paquetes faltantes**: Pueden faltar paquetes necesarios (`sf`, `dismo`, `rgdal`, `CENFA`, `raster`, `progress`).  
-- **Problemas con rutas de directorio**:  
-  - Las rutas en Windows con barras invertidas (`\`) pueden fallar si no se escapan correctamente.  
-  - Usa barras inclinadas (`/`) o dobles barras invertidas (`\\`) para mayor compatibilidad.  
-- **Problemas con el directorio de trabajo**:  
-  - `setwd()` puede fallar si la ruta no existe o contiene caracteres especiales.  
-
-## 2. Errores al cargar datos
-### Carga de archivos raster
-- Rutas incorrectas en llamadas a `list.files()`.  
-- Proyecciones incompatibles entre datos climáticos y shapefiles de especies.  
-- Problemas de memoria al apilar archivos raster grandes.  
-
-### Carga de shapefiles
-- Shapefiles faltantes en `dir_shapes`.  
-- Nombre de campo incorrecto (se espera el campo `"Nombre"`).  
-- Shapefiles corruptos o inválidos.  
-
-## 3. Errores en ejecución de funciones
-- **Incompatibilidad de CRS**: Los archivos de entrada pueden tener proyecciones distintas a pesar de la configuración.  
-- **Problemas específicos por especie**:  
-  - Polígonos de distribución vacíos o inválidos.  
-  - Distribuciones fuera del área cubierta por los datos climáticos.  
-- **Límites de memoria**: Los análisis son intensivos en memoria y pueden fallar en equipos con RAM limitada.  
-- **Problemas con procesamiento paralelo**: La opción `parallel = TRUE` puede fallar en algunos sistemas.  
-
-## 4. Errores al guardar resultados
-- Permisos insuficientes para escribir en `dir_out`.  
-- Conflictos con nombres de archivo ya existentes.  
-- Problemas con archivos grandes por espacio en disco o formato.  
-
-## 5. Errores en bucles de ejecución
-- **Inconsistencias en nombres de especies**: `species_lista[[i]]` puede no coincidir con los nombres reales de los archivos.  
-- **Interrupciones**: Procesos largos pueden fallar antes de completarse.  
-
-## 6. Errores específicos de paquetes
-### Problemas con CENFA
-- `enfa()` o `cnfa()` pueden fallar con ciertas configuraciones de entrada.  
-- El parámetro `field` puede no coincidir con los atributos del shapefile.  
-
-## Errores críticos más frecuentes
-1. **Incompatibilidad de CRS**: Archivos con proyecciones diferentes harán fallar el análisis.  
-2. **Saturación de memoria**: Procesar muchas especies o raster grandes puede agotar la RAM.  
-3. **Falta el campo `"Nombre"`**: La función requiere este campo en todos los shapefiles.  
-4. **Áreas de distribución inválidas**: Algunas especies pueden tener rangos demasiado pequeños o no válidos.  
-5. **Problemas con rutas**: Rutas en Windows con espacios o caracteres especiales pueden causar errores.  
+En construcción
+ 
 
 
 
