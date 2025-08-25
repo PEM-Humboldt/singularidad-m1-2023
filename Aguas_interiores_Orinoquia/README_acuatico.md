@@ -56,8 +56,8 @@ La planificación sistemática de la conservación (PSC) para las aguas interior
 ![Image](https://github.com/PEM-Humboldt/singularidad-m1-2023/blob/7b0e7e0818c7e1d95726fe03a20468a2cfde96e8/Worlflux.jpg)
 
 
-## Ejecución del algoritmo
-Al igual que en el diagrama, el código se estructuró según las secciones del flujo de trabajo para que el usuario comprenda mejor las funciones.
+## Ejecución del algoritmo (iV)
+Específicamente la estapa cuatro del flujo de análisis comprenden las funciones principales 
 
 Las siguientes secciones y subsecciones pueden visualizarse fácilmente en RStudio:
 
@@ -76,9 +76,14 @@ Para este flujo de análisis se necesitan x archivos principales que son nombrad
 
 
 # Errores comunes
-En construcción
- 
 
+🚨Paquetes no instalados o conflictos entre versiones.
+
+📁 Archivos de entrada no encontrados o rutas incorrectas.
+
+🗺️ Inconsistencias entre los CRS de diferentes capas.
+
+💾 Agotamiento de memoria o fallos en procesamiento paralelo.
 
 
 # Autores(as) y contacto
