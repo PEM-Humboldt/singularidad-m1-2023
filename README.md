@@ -12,7 +12,7 @@ La planificación sistemática de la conservación (PSC) es un proceso riguroso 
 
 # Estructura del repositorio
 
-Aguas_interiores_Orinoquia: Carpeta que contiene las rutinas de trabajo para cumplir con las metas de conservación de ecosistemas de aguas interiores establecidas en el Plan de Acción de la Biodiversidad (PAB) a nivel nacional y en el Marco Global de Biodiversidad de Kunming-Montreal a nivel global.
+[Aguas_interiores_Orinoquia](https://github.com/PEM-Humboldt/singularidad-m1-2023/tree/c88a7442cbe2e1fe733ce57ca02ae923e7cce492/Aguas_interiores_Orinoquia): Carpeta que contiene las rutinas de trabajo para cumplir con las metas de conservación de ecosistemas de aguas interiores establecidas en el Plan de Acción de la Biodiversidad (PAB) a nivel nacional y en el Marco Global de Biodiversidad de Kunming-Montreal a nivel global.
 
 XXXXX: En construcción
 
