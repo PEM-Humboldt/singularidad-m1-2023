@@ -10,7 +10,6 @@ En este repositorio se compilan las rutinas para la priorización de ecosistemas
 ---
 # Dependencias
 * [R](https://cran.r-project.org/mirrors.html)
-* [RStudio](https://www.rstudio.com/products/rstudio/download/#download)
 
 # Prerequisitos
 El paquete [prioritizr](https://prioritizr.net/) permite ejecutar las funciones más importantes para la priorización de zonas de conservación. En su repositorio se puede encontrar una descripción detallada de cada una de sus funciones.
@@ -56,14 +55,27 @@ La planificación sistemática de la conservación (PSC) para las aguas interior
 ![Image](https://github.com/PEM-Humboldt/singularidad-m1-2023/blob/7b0e7e0818c7e1d95726fe03a20468a2cfde96e8/Worlflux.jpg)
 
 
-## Ejecución del algoritmo (iV)
-Específicamente la estapa cuatro del flujo de análisis comprenden las funciones principales 
+## Rutina para la ejecución del algoritmo
+
+Específicamente la etapa cuatro del flujo de análisis comprende las funciones principales para el desarrollo del algoritmo de priorización. Esta rutina desarrolla un problema de optimización mediante la función `problem` en donde se incluyen todos componentes típicos de un problema de priorización (restricciones, penalidades, características de conservación y costos) como se detalla a cuantinuación.
+
+| Componente | Descripción | Comando |
+| :--- | :--- | :--- |
+| **Características** | 378 mapas de distribución de especies, ecosistemas y valores culturales relacionados con sistemas de aguas interiores.| `problem(features = capa_características)` |
+| **Costos** | Dos aproximaciones de costos por *Integridad* y *Conectividad*. Define las unidades de planificación, asociando cada unidad con un valor de costo. | `problem(x = capa_costos, cost_column = 'Nombre_columna')` |
+| **Restricciones** | Dos escenarios: con y sin restricciones por *inclusión*. Fuerza al algoritmo a incluir áreas específicas de interés (áreas protegidas del RUNAP). | `add_locked_in_constraints(capa_inclusiones)` |
+| **Penalidades** | Castigan o premian áreas específicas basándose en criterios ecológicos de *conectividad* e *integridad*. Los valores se modifican según un factor de penalidad (p) numérico. | `add_connectivity_penalties(penalty = PF, data = matriz_conectividad)`<br>`add_linear_penalties(penalty = p, data = 'columna_penalidad')` |
+| **Metas** | Definen el porcentaje de representatividad de las características (t) a alcanzar en las áreas priorizadas. Valores escalados 0-1 (1 = 100% de representatividad). | `add_relative_targets(t)` |
+| **Objetivos** | Eje principal del problema de optimización: establece la relación entre representación de características y costos (maximizar representación, minimizar costos ecológicos). | `add_min_set_objective()` |
+
+Este repositorio contiene dos versiones para la etapa cuatro: una aproximación que se basa en i) [costos por integridad](https://github.com/PEM-Humboldt/singularidad-m1-2023/blob/cf0cdd38ee8f891cc6b4b9b677811c647bb10092/Aguas_interiores_Orinoquia/Rutina_optimizada_paralel_log_escenarios_runINT.R) y en costos por conectividad. Estas dos rutinas se plantearon de forma complementaria, en donde ambas consideran criterios de *Integridad* y *Conectividad*, pero en componentes diferentes del problema de priorización. Es decir, en los costos por integridad se usan penalidades de conectividad, y en costos por conectividad, se usan penalidades de integridad (ver tabla arriba, sección de penalidades).
+
 
 Las siguientes secciones y subsecciones pueden visualizarse fácilmente en RStudio:
 
 ![Image](https://github.com/PEM-Humboldt/singularidad-m1-2023/blob/5ad64386aea3e43276e69d5cccc7b1579013130e/Imagenes/Estructura_algoirmo.png)
 
-# Archivos necesarios
+## Archivos necesarios
 Para este flujo de análisis se necesitan x archivos principales que son nombrados en el código de la siguiente manera:
 
 ```R
