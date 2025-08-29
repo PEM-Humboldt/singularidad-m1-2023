@@ -31,8 +31,8 @@ Este proyecto está licenciado bajo la licencia MIT. Para obtener más informaci
 En construción
 
 # Referencias
-Margules C. R. & Pressey R. L. (2000). Systematic conservation planning. Nature, 405, 243-253.
-Kukkala, A. S., & Moilanen, A. (2013). Core concepts of spatial prioritisation in systematic conservation planning. Biological Reviews, 88(2), 443-464. https://doi.org/10.1111/brv.12008
+* Margules C. R. & Pressey R. L. (2000). Systematic conservation planning. Nature, 405, 243-253.
+* Kukkala, A. S., & Moilanen, A. (2013). Core concepts of spatial prioritisation in systematic conservation planning. Biological Reviews, 88(2), 443-464. https://doi.org/10.1111/brv.12008
 
 
 
