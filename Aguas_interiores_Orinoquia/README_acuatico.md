@@ -59,13 +59,13 @@ La PSC para las aguas interiores de la Orinoquia siguió una metodología de cua
 ## Ejecución del algoritmo
 Específicamente la etapa cuatro del flujo de análisis comprende las funciones principales para el desarrollo del algoritmo de priorización, en esta fase se generan 144 portafolios que resultan de la combinación de metas de conservación (10-60%), escenarios (con y sin restricciones), factores de penalidad (0-10) y aproximación de costos (*Integridad* y *Conectividad*). Por la complejidad de las combinaciónes entre estas variables de análisis, se utilizó una estructura paralelizada (paquetes `furr` y `future`) que ayudan a reducir significativamente los tiempos de ejecución. Adicionalemnte, este repositorio contiene dos versiones para la ejecución del algoritmo que se dividen de acuerdo al tipo de aproximación de costos que emplean: 
 
-* [Costos por integridad](Aguas_interiores_Orinoquia/Run_prioritizr_scenarios_integrity.R) 
+* [Costos por integridad](https://github.com/PEM-Humboldt/singularidad-m1-2023/blob/aabf8efe33f2557afb01f132271292dd56363477/Aguas_interiores_Orinoquia/Run_prioritizr_scenarios_integrity.R) 
 
 * [Costos por conectividad](Aguas_interiores_Orinoquia/Run_prioritizr_scenarios_connectivity.R)
 
 Ambas rutinas se componen de 7 secciones las cuales pueden visualizarse fácilmente en RStudio:
 
-![Image](https://github.com/PEM-Humboldt/singularidad-m1-2023/blob/4be421773ee416fa5182f918412dbc2437c1e756/Imagenes/Secciones_rutina.png)
+![Image](https://github.com/PEM-Humboldt/singularidad-m1-2023/blob/aabf8efe33f2557afb01f132271292dd56363477/Imagenes/Secciones_rutina_aguas_interiores.png)
 
 
 ## Archivos necesarios
