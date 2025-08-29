@@ -59,9 +59,9 @@ La PSC para las aguas interiores de la Orinoquia siguió una metodología de cua
 ## Ejecución del algoritmo
 Específicamente la etapa cuatro del flujo de análisis comprende las funciones principales para el desarrollo del algoritmo de priorización, en esta fase se generan 144 portafolios que resultan de la combinación de metas de conservación (10-60%), escenarios (con y sin restricciones), factores de penalidad (0-10) y aproximación de costos (*Integridad* y *Conectividad*). Por la complejidad de las combinaciónes entre estas variables de análisis, se utilizó una estructura paralelizada (paquetes `furr` y `future`) que ayudan a reducir significativamente los tiempos de ejecución. Adicionalemnte, este repositorio contiene dos versiones para la ejecución del algoritmo que se dividen de acuerdo al tipo de aproximación de costos que emplean: 
 
-* [Costos por integridad](https://github.com/PEM-Humboldt/singularidad-m1-2023/blob/4516d59258ba099557aab54dfaa2517f85631a87/Aguas_interiores_Orinoquia/Run_prioritizr_scenarios_integrity.R) 
+* [Costos por integridad](Aguas_interiores_Orinoquia/Run_prioritizr_scenarios_integrity.R) 
 
-* [Costos por conectividad](https://github.com/PEM-Humboldt/singularidad-m1-2023/blob/4516d59258ba099557aab54dfaa2517f85631a87/Aguas_interiores_Orinoquia/Run_prioritizr_scenarios_connectivity.R)
+* [Costos por conectividad](Aguas_interiores_Orinoquia/Run_prioritizr_scenarios_connectivity.R)
 
 Ambas rutinas se componen de 7 secciones las cuales pueden visualizarse fácilmente en RStudio:
 
@@ -91,7 +91,7 @@ conectividad <- st_read("Conectividad/microcuencas_con_CI.shp")
 ```
 ## Problema de optimización
 
-Posteriormente se desarrolla un problema de optimización mediante la función `problem` en donde se incluyen todos componentes típicos de un problema de priorización (restricciones, penalidades, características de conservación y costos) como se detalla a cuantinuación. Las dos rutinas se plantearon de forma complementaria, en donde se consideran criterios de *Integridad* y *Conectividad*, pero en componentes diferentes del problema de priorización. Es decir, en los [costos por integridad](https://github.com/PEM-Humboldt/singularidad-m1-2023/blob/cf0cdd38ee8f891cc6b4b9b677811c647bb10092/Aguas_interiores_Orinoquia/Rutina_optimizada_paralel_log_escenarios_runINT.R) se usan penalidades de conectividad, y en [costos por conectividad](https://github.com/PEM-Humboldt/singularidad-m1-2023/blob/4516d59258ba099557aab54dfaa2517f85631a87/Aguas_interiores_Orinoquia/Run_prioritizr_scenarios_connectivity.R), se usan penalidades de integridad.
+Posteriormente se desarrolla un problema de optimización mediante la función `problem` en donde se incluyen todos componentes típicos de un problema de priorización (restricciones, penalidades, características de conservación y costos) como se detalla a cuantinuación. Las dos rutinas se plantearon de forma complementaria, en donde se consideran criterios de *Integridad* y *Conectividad*, pero en componentes diferentes del problema de priorización. Es decir, en los [costos por integridad](Aguas_interiores_Orinoquia/Run_prioritizr_scenarios_integrity.R) se usan penalidades de conectividad, y en [costos por conectividad](Aguas_interiores_Orinoquia/Run_prioritizr_scenarios_connectivity.R), se usan penalidades de integridad.
 
 | Componente | Descripción | Comando |
 | :--- | :--- | :--- |
