@@ -128,7 +128,7 @@ Posteriormente se desarrolla un problema de optimización mediante la función `
 
 ## Licencia
 
-Este proyecto está licenciado bajo la licencia MIT. Para obtener más información, consulte el archivo [LICENCIA](https://github.com/PEM-Humboldt/climate-vulnerability-index/blob/main/LICENSE). 
+Este proyecto está licenciado bajo la licencia MIT. Para obtener más información, consulte el archivo [LICENCIA](https://github.com/PEM-Humboldt/singularidad-m1-2023/blob/5775e9725df540cf04fb170b167f19b88f00bedf/LICENSE). 
 
 ## Financiamiento
 
