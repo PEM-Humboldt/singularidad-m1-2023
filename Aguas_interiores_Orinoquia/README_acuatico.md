@@ -63,7 +63,7 @@ Específicamente la etapa cuatro del flujo de análisis comprende las funciones 
 
 * Costos por conectividad: Run_prioritizr_scenarios_integrity.R
 
-Ambas rutinas se componen de 7 secciones las cuales pueden visualizarse fácilmente en RStudio:
+Ambas rutinas se componen de 8 secciones las cuales pueden visualizarse fácilmente en RStudio:
 
 ![Image](https://github.com/PEM-Humboldt/singularidad-m1-2023/blob/aabf8efe33f2557afb01f132271292dd56363477/Imagenes/Secciones_rutina_aguas_interiores.png)
 
