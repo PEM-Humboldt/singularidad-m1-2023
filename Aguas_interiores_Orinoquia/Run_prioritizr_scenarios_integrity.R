@@ -1,108 +1,190 @@
 # ..............................................................................
-# PRIORIZACION ESPACIAL CON PRIORITIZR + LOGGING ROBUSTO
+# SCRIPT: Run_prioritizr_scenarios_integrity.R
+# PROYECTO: Prioridades de conservación aguas interiores - Cuenca del Orinoco
 # ..............................................................................
 
-# 1. DEPENDENCIAS ------------------------------------------------------------
+# DESCRIPCIÓN:
+# Este script ejecuta múltiples escenarios de planificación de conservación 
+# utilizando el paquete PrioritizR. Realiza:
+# 1. Procesamiento paralelo de múltiples escenarios con diferentes parámetros
+# 2. Generación de logs detallados para cada ejecución
+# 3. Evaluación de soluciones con diferentes penalizaciones y targets
+# 4. Exportación de resultados en múltiples formatos (shapefiles, Excel, RData)
+
+# CARACTERÍSTICAS TÉCNICAS:
+# - Procesamiento paralelo con future y furrr (8 workers)
+# - Sistema de logging robusto con registro de errores
+# - Cuatro escenarios con diferentes combinaciones de características
+# - Penalizaciones de conectividad variables (0-10)
+# - Targets de conservación del 10% al 100%
+
+# AUTOR: [Pioridades de conservación]
+# FECHA: [29/08/2025]
+
+# COMENTARIOS:
+# LOS COMENTARIOS CON "(USUARIO)" INDICAN LAS FUNCIONES DONDE EL USUARIO DEBE AJUSTAR
+# ..............................................................................
+
+# 1. CONFIGURACIÓN INICIAL Y DEPENDENCIAS --------------------------------------
+
+# Verificar e instalar paquete pacman si es necesario
 if (!require("pacman")) install.packages("pacman")
+
+# Cargar/correr todos los paquetes necesarios
 pacman::p_load(
-  terra, sf, prioritizr, prioritizrdata, ggplot2,
-  ggspatial, viridis, dplyr, tidyr, raster, fasterize,
-  stringr, openxlsx, crayon, furrr, future, rcbc, progress
+  # Análisis espacial
+  terra, sf, raster, fasterize,
+  # Priorización
+  prioritizr, prioritizrdata, rcbc,
+  # Manipulación de datos
+  dplyr, tidyr, stringr,
+  # Visualización
+  ggplot2, ggspatial, viridis,
+  # Exportación
+  openxlsx,
+  # Procesamiento paralelo
+  furrr, future,
+  # Utilidades
+  crayon, progress
 )
 
-# 2. CONFIGURACIÓN -----------------------------------------------------------
+# 2. CONFIGURACIÓN DEL ENTORNO -------------------------------------------------
+
+# Configurar procesamiento paralelo (8 workers) (USUARIO)
 plan(multisession, workers = 8)
+
+# Desactivar cálculos S2 para sf (mejor rendimiento con datos proyectados)
 sf_use_s2(FALSE)
-options(scipen=999)
+
+# Desactivar notación científica
+options(scipen = 999)
+
+# Registrar tiempo de inicio global
 global_start_time <- Sys.time()
 
+# Establecer directorio de trabajo (USUARIO)
 setwd('C:/PrioritizR_Run_Orinoquia')
-output.base.dir <- "Resultados_INT"
 
-# 3. INSUMOS -----------------------------------------------------------------
+# Directorio base para resultados (USUARIO)
+output.base.dir <- "Resultados_INT" 
 
-# Área de estudio
+# 3. CARGA Y PREPARACIÓN DE DATOS ----------------------------------------------
+
+# 3.1. Área de estudio - Microcuencas
 ae <- st_read('Area_estudio/Microcuencas.shp')
 
-# Especies
-spp.list <- list.files('Caracteristicas/Especies/biomodelos', full.names = T)
-features.list <- lapply(spp.list, function(f) { r <- raster(f); names(r) <- basename(f); r })
+# 3.2. Características de biodiversidad
+# 3.2.1. Especies (archivos de Biomodelos)
+spp.list <- list.files('Caracteristicas/Especies/biomodelos', full.names = TRUE)
+features.list <- lapply(spp.list, function(f) {
+  r <- raster(f)
+  names(r) <- basename(f)  # Mantener nombre original como identificador
+  return(r)
+})
 
-# Ecosistemas
-eco.list <- list.files('Caracteristicas/Ecosistemas/Estandarizados', full.names = T)
-eco.rasters <- lapply(eco.list, function(f) { r <- raster(f); names(r) <- basename(f); r })
+# 3.2.2. Ecosistemas
+eco.list <- list.files('Caracteristicas/Ecosistemas/Estandarizados', full.names = TRUE)
+eco.rasters <- lapply(eco.list, function(f) {
+  r <- raster(f)
+  names(r) <- basename(f)
+  return(r)
+})
 features.list <- c(features.list, eco.rasters)
 
-# Stack versión 1
+# Crear primer stack de características (solo especies y ecosistemas)
 raster_stack_v1 <- stack(features.list)
-crs(raster_stack_v1) <- "EPSG:9377"
+crs(raster_stack_v1) <- "EPSG:9377"  # Establecer CRS apropiado
 
-# Cultura
-cul.list <- list.files('Caracteristicas/Cultura/Estandarizados', full.names = T)
-cul.rasters <- lapply(cul.list, function(f) { r <- raster(f); names(r) <- basename(f); r })
+# 3.2.3. Características culturales
+cul.list <- list.files('Caracteristicas/Cultura/Estandarizados', full.names = TRUE)
+cul.rasters <- lapply(cul.list, function(f) {
+  r <- raster(f)
+  names(r) <- basename(f)
+  return(r)
+})
 features.list <- c(features.list, cul.rasters)
 
-# Stack versión 2
+# Crear segundo stack de características (todas las características)
 raster_stack_v2 <- stack(features.list)
 crs(raster_stack_v2) <- "EPSG:9377"
 
-# Inclusiones
+# 3.3. Áreas de inclusión forzada (locked-in)
 locked.in1 <- raster("Restricciones/Inclusion/RUNAP_1000_stdr.tif")
 crs(locked.in1) <- "EPSG:9377"
 
-# Costos
+# 3.4. Costos de conservación (basados en integridad ecológica)
 costo.int <- st_read('Costos/Integridad_total_cor.shp')
+
+# Normalizar costos (0 = mayor costo, 100 = menor costo)
 costo.int$Int_ttl.r <- 100 - ((costo.int[['Int_ttl']] - min(costo.int$Int_ttl, na.rm = TRUE)) /
                                 (max(costo.int$Int_ttl, na.rm = TRUE) - min(costo.int$Int_ttl, na.rm = TRUE)) * 100)
 
-# Conectividad
+# 3.5. Datos de conectividad
 conectividad <- st_read("Conectividad/microcuencas_con_CI.shp")
-conectividad <- st_transform(conectividad, crs = 9377)
-rast_templ <- raster(resolution = 1000, crs=9377, ext = extent(ae))
+conectividad <- st_transform(conectividad, crs = 9377)  # Asegurar CRS consistente
+
+# Crear raster template para rasterización
+rast_templ <- raster(resolution = 1000, crs = 9377, ext = extent(ae))
 conectividad.r <- fasterize(conectividad, rast_templ, field = "CI")
 
+# Clasificar y normalizar valores de conectividad
 r_normalized <- classify(rast(conectividad.r), 
-                         matrix(c(0, 0.00062, 1, 0.00062, 0.000809, 0.8,
-                                  0.000809, 0.001105, 0.6, 0.001105, 0.001821, 0.4,
-                                  0.001821, 0.1, 0.2), ncol = 3, byrow = TRUE), include.lowest=TRUE)
+                         matrix(c(0, 0.00062, 1, 
+                                  0.00062, 0.000809, 0.8,
+                                  0.000809, 0.001105, 0.6, 
+                                  0.001105, 0.001821, 0.4,
+                                  0.001821, 0.1, 0.2), 
+                                ncol = 3, byrow = TRUE), 
+                         include.lowest = TRUE)
 
+# Calcular matriz de conectividad
 con_scores <- connectivity_matrix(costo.int, r_normalized)
-con_scores <- rescale_matrix(con_scores, max = 1)
+con_scores <- rescale_matrix(con_scores, max = 1)  # Normalizar a escala 0-1
 
-# Plantilla microcuencas
+# 3.6. Plantilla de microcuencas con información de área
 plantilla.micro <- ae
-plantilla.micro$area_km2 <- st_area(ae) / 10^6
-total_area_km2 <- sum(plantilla.micro$area_km2)
+plantilla.micro$area_km2 <- as.numeric(st_area(ae) / 10^6)  # Área en km²
+total_area_km2 <- sum(plantilla.micro$area_km2)  # Área total de referencia
 
-# 4. PARÁMETROS USUARIO --------------------------------------------------------
-targets <- seq(0.1, 1, 0.1)
-penalties <- c(0, 1, 2, 4, 6, 8, 10)
-scenarios <- c("solucion1", "solucion2", "solucion3", "solucion4")
+# 4. PARÁMETROS DE EJECUCIÓN ---------------------------------------------------
 
-# 5. CARPETAS DE TRABAJO--------------------------------------------------------
+# Definir parámetros para los escenarios (USUARIO)
+targets <- seq(0.1, 1, 0.1)  # Targets de 10% a 100% en incrementos de 10%
+penalties <- c(0, 1, 2, 4, 6, 8, 10)  # Niveles de penalización
+scenarios <- c("solucion1", "solucion2", "solucion3", "solucion4")  # Nombres de escenarios
 
+# 5. PREPARACIÓN DE CARPETAS DE RESULTADOS -------------------------------------
+
+# Crear directorio principal si no existe
 if (!dir.exists(output.base.dir)) {
   dir.create(output.base.dir)
-  cat(blue(paste0("Carpeta creada:", output.base.dir, '\n')))
+  cat(blue(paste0("Carpeta creada: ", output.base.dir, '\n')))
 }
-# Define subfolder names
-subfolders <- scenarios
-for (folder in subfolders) {
+
+# Crear subdirectorios para cada escenario
+for (folder in scenarios) {
   path <- file.path(output.base.dir, folder)
   if (!dir.exists(path)) {
     dir.create(path)
+    cat(blue(paste0("Subcarpeta creada: ", path, '\n')))
   }
 }
 
-# 6. FUNCIONES ALGORITMO  ------------------------------------------------------
+# 6. DEFINICIÓN DE FUNCIONES PRINCIPALES ---------------------------------------
 
-# Logger robusto
+# 6.1. Función de logging robusto
 write_log <- function(log_path, escenario, start_time, end_time, summary_table, 
                       penalties, targets, error = NULL) {
-  tiempo_total <- round(difftime(end_time, start_time, units = "mins"), 2)
+  # Crear directorio para logs si no existe
   dir.create(dirname(log_path), recursive = TRUE, showWarnings = FALSE)
   
+  # Calcular tiempo total de ejecución
+  tiempo_total <- round(difftime(end_time, start_time, units = "mins"), 2)
+  
+  # Iniciar captura de output
   sink(log_path)
+  
+  # Encabezado del log
   cat("=============================================\n")
   cat(" PRIORIZACIÓN - LOG EJECUCIÓN\n")
   cat("=============================================\n")
@@ -110,11 +192,14 @@ write_log <- function(log_path, escenario, start_time, end_time, summary_table,
   cat("Inicio:", format(start_time), "\n")
   cat("Fin:", format(end_time), "\n")
   cat("Duración (minutos):", tiempo_total, "\n\n")
+  
+  # Parámetros de ejecución
   cat("Parámetros:\n")
   cat("Penalties:", paste(penalties, collapse = ", "), "\n")
   cat("Targets:", paste(targets, collapse = ", "), "\n")
   cat("Total soluciones:", ifelse(is.null(summary_table), 0, nrow(summary_table)), "\n\n")
   
+  # Resumen de áreas priorizadas
   if (!is.null(summary_table) && nrow(summary_table) > 0) {
     cat("Resumen de área priorizada (km2):\n")
     print(summary_table %>% summarise(
@@ -124,33 +209,38 @@ write_log <- function(log_path, escenario, start_time, end_time, summary_table,
     ))
   }
   
+  # Información de error si existe
   if (!is.null(error)) {
     cat("\n*** ERROR DETECTADO ***\n")
     cat(as.character(error), "\n")
+    cat("Traceback:\n")
+    cat(paste(traceback(error), collapse = "\n"))
   }
+  
   cat("=============================================\n")
+  
+  # Finalizar captura
   sink()
 }
 
-# Optimización por escenario
+# 6.2. Función de optimización por escenario
 run_scenario <- function(escenario, p, t) {
-  
-  # Definir stack e inclusiones
+  # Determinar configuración según escenario
   if (escenario == 'solucion1') {
-    raster_stack <- raster_stack_v1
-    inclusion <- NULL
+    raster_stack <- raster_stack_v1  # Solo especies y ecosistemas
+    inclusion <- NULL               # Sin inclusiones forzadas
   } else if (escenario == 'solucion2') {
-    raster_stack <- raster_stack_v2
-    inclusion <- NULL
+    raster_stack <- raster_stack_v2  # Todas las características
+    inclusion <- NULL               # Sin inclusiones forzadas
   } else if (escenario == 'solucion3') {
-    raster_stack <- raster_stack_v1
-    inclusion <- 1
+    raster_stack <- raster_stack_v1  # Solo especies y ecosistemas
+    inclusion <- 1                  # Con inclusiones forzadas
   } else if (escenario == 'solucion4') {
-    raster_stack <- raster_stack_v2
-    inclusion <- 1
+    raster_stack <- raster_stack_v2  # Todas las características
+    inclusion <- 1                  # Con inclusiones forzadas
   }
   
-  # Construcción del problema
+  # Construir problema de optimización
   p1 <- problem(costo.int, rast(raster_stack), cost_column = "Int_ttl.r") %>%
     add_min_set_objective() %>%
     add_relative_targets(t) %>%
@@ -158,22 +248,30 @@ run_scenario <- function(escenario, p, t) {
     add_binary_decisions() %>%
     add_connectivity_penalties(penalty = p, data = con_scores)
   
-  if (!is.null(inclusion)) p1 <- p1 %>% 
-    add_locked_in_constraints(rast(locked.in1))
+  # Agregar constraint de inclusiones si corresponde
+  if (!is.null(inclusion)) {
+    p1 <- p1 %>% add_locked_in_constraints(rast(locked.in1))
+  }
   
+  # Resolver problema
   s1 <- solve(p1)
+  
+  # Evaluar cumplimiento de targets
   target_coverage <- eval_target_coverage_summary(p1, s1[,"solution_1"])
   
+  # Calcular métricas de la solución
   plantilla.micro$temp_solution <- s1$solution_1
   seleccionadas <- plantilla.micro %>% filter(temp_solution == 1)
   num_microcuencas <- nrow(seleccionadas)
   area_priorizada <- sum(st_area(seleccionadas)) / 10^6  
   representatividad <- (area_priorizada / total_area_km2) * 100
   
+  # Devolver resultados
   list(
     scenario = escenario,
     name = paste0("Penalty_", p, "_Target_", t),
-    penalty = p, target = t,
+    penalty = p, 
+    target = t,
     num_microcuencas = num_microcuencas,
     area_km2 = area_priorizada,
     representatividad = representatividad,
@@ -182,25 +280,34 @@ run_scenario <- function(escenario, p, t) {
   )
 }
 
-# 7. LOOP GENERAL POR ESCENARIO ------------------------------------------------
+# 7. EJECUCIÓN PRINCIPAL POR ESCENARIOS ----------------------------------------
 
+# Iterar sobre cada escenario definido
 for (escenario in scenarios) {
   
-  cat(blue(paste0("\nEjecutando ", escenario, " ...\n")))
+  cat(blue(paste0("\nIniciando ejecución de: ", escenario, " ...\n")))
   
-  param_grid <- expand.grid(penalty = penalties, target = targets, stringsAsFactors = FALSE)
+  # Crear grid de parámetros para este escenario
+  param_grid <- expand.grid(penalty = penalties, target = targets, 
+                            stringsAsFactors = FALSE)
+  
+  # Registrar tiempo de inicio del escenario
   escenario_start_time <- Sys.time()
   
+  # Variables para captura de resultados y errores
   error_catch <- NULL
   resultados <- NULL
   summary_table <- NULL
   
+  # Ejecutar optimizaciones en paralelo con manejo de errores
   tryCatch({
     resultados <- future_pmap(
       list(param_grid$penalty, param_grid$target),
-      function(p, t) run_scenario(escenario, p, t)
+      function(p, t) run_scenario(escenario, p, t),
+      .progress = TRUE  # Mostrar barra de progreso
     )
     
+    # Crear tabla resumen de resultados
     summary_table <- bind_rows(lapply(resultados, function(res) {
       data.frame(
         Escenario = res$scenario,
@@ -213,33 +320,54 @@ for (escenario in scenarios) {
       )
     }))
     
+    # Preparar plantilla con todas las soluciones
     plantilla.micro.temp <- plantilla.micro
     for (res in resultados) {
       plantilla.micro.temp[[res$name]] <- res$solution
     }
     
-    dir.create(file.path(output.base.dir, escenario), recursive = TRUE, showWarnings = FALSE)
-    st_write(plantilla.micro.temp, file.path(output.base.dir, escenario, paste0("Orinoquia_", escenario, ".shp")), delete_dsn = TRUE)
+    # Exportar resultados espaciales
+    st_write(plantilla.micro.temp, 
+             file.path(output.base.dir, escenario, 
+                       paste0("Orinoquia_", escenario, ".shp")), 
+             delete_dsn = TRUE)
     
+    # Exportar cobertura de targets por solución
     wb <- createWorkbook()
     for (i in seq_along(resultados)) {
       addWorksheet(wb, sheetName = resultados[[i]]$name)
-      writeData(wb, sheet = resultados[[i]]$name, x = resultados[[i]]$coverage, rowNames = FALSE)
+      writeData(wb, sheet = resultados[[i]]$name, 
+                x = resultados[[i]]$coverage, 
+                rowNames = FALSE)
     }
-    saveWorkbook(wb, file = file.path(output.base.dir, escenario, paste0("Orinoquia_", escenario, "_coverage.xlsx")), overwrite = TRUE)
+    saveWorkbook(wb, 
+                 file = file.path(output.base.dir, escenario, 
+                                  paste0("Orinoquia_", escenario, "_coverage.xlsx")), 
+                 overwrite = TRUE)
     
-    write.xlsx(summary_table, file = file.path(output.base.dir, escenario, paste0("Orinoquia_", escenario, "_resumen.xlsx")))
-    save(resultados, summary_table, file = file.path(output.base.dir, escenario, paste0("Orinoquia_", escenario, ".RData")))
+    # Exportar tabla resumen y datos completos
+    write.xlsx(summary_table, 
+               file = file.path(output.base.dir, escenario, 
+                                paste0("Orinoquia_", escenario, "_resumen.xlsx")))
+    
+    save(resultados, summary_table, 
+         file = file.path(output.base.dir, escenario, 
+                          paste0("Orinoquia_", escenario, ".RData")))
     
   }, error = function(e) {
     error_catch <<- e
   })
   
+  # Registrar tiempo de finalización
   escenario_end_time <- Sys.time()
   
-  log_file <- file.path(output.base.dir, escenario, paste0("Orinoquia_", escenario, "_log.txt"))
-  write_log(log_file, escenario, escenario_start_time, escenario_end_time, summary_table, penalties, targets, error_catch)
+  # Generar log del escenario
+  log_file <- file.path(output.base.dir, escenario, 
+                        paste0("Orinoquia_", escenario, "_log.txt"))
+  write_log(log_file, escenario, escenario_start_time, escenario_end_time, 
+            summary_table, penalties, targets, error_catch)
   
+  # Reportar estado de finalización
   if (is.null(error_catch)) {
     cat(green(paste0("Finalizado correctamente: ", escenario, "\n")))
   } else {
@@ -247,5 +375,16 @@ for (escenario in scenarios) {
   }
 }
 
+# 8. FINALIZACIÓN --------------------------------------------------------------
+
+# Registrar tiempo final y mostrar resumen
 global_end_time <- Sys.time()
-cat(blue(paste0("TIEMPO TOTAL COMPLETO: ", global_end_time - global_start_time, "\n")))
+tiempo_total_global <- round(difftime(global_end_time, global_start_time, units = "hours"), 2)
+
+cat(blue(paste0("\n=============================================\n")))
+cat(blue(paste0("EJECUCIÓN COMPLETADA\n")))
+cat(blue(paste0("Tiempo total: ", tiempo_total_global, " horas\n")))
+cat(blue(paste0("Escenarios ejecutados: ", length(scenarios), "\n")))
+cat(blue(paste0("Soluciones generadas: ", length(scenarios) * length(penalties) * length(targets), "\n")))
+cat(blue(paste0("Resultados en: ", output.base.dir, "\n")))
+cat(blue(paste0("=============================================\n")))
